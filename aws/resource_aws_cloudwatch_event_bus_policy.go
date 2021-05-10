@@ -3,14 +3,18 @@ package aws
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	events "github.com/aws/aws-sdk-go/service/cloudwatchevents"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	tfevents "github.com/terraform-providers/terraform-provider-aws/aws/internal/service/cloudwatchevents"
-	iamwaiter "github.com/terraform-providers/terraform-provider-aws/aws/internal/service/iam/waiter"
+)
+
+const (
+	DefaultEventBusName = "default"
+	PropagationTimeout  = 2 * time.Minute
 )
 
 func resourceAwsCloudWatchEventBusPolicy() *schema.Resource {
@@ -32,7 +36,7 @@ func resourceAwsCloudWatchEventBusPolicy() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				ValidateFunc: validateCloudWatchEventBusName,
-				Default:      tfevents.DefaultEventBusName,
+				Default:      DefaultEventBusName,
 			},
 			"policy": {
 				Type:             schema.TypeString,
@@ -80,7 +84,7 @@ func resourceAwsCloudWatchEventBusPolicyRead(d *schema.ResourceData, meta interf
 	var policy *string
 
 	// Especially with concurrent PutPermission calls there can be a slight delay
-	err = resource.Retry(iamwaiter.PropagationTimeout, func() *resource.RetryError {
+	err = resource.Retry(PropagationTimeout, func() *resource.RetryError {
 		log.Printf("[DEBUG] Reading CloudWatch Events bus: %s", input)
 		output, err = conn.DescribeEventBus(&input)
 		if err != nil {
@@ -112,7 +116,7 @@ func resourceAwsCloudWatchEventBusPolicyRead(d *schema.ResourceData, meta interf
 
 	busName := aws.StringValue(output.Name)
 	if busName == "" {
-		busName = tfevents.DefaultEventBusName
+		busName = DefaultEventBusName
 	}
 	d.Set("event_bus_name", busName)
 
