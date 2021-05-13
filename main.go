@@ -18,7 +18,7 @@ func main() {
 	opts := &plugin.ServeOpts{ProviderFunc: aws.Provider}
 
 	if debugMode {
-		err := plugin.Debug(context.Background(), "registry.terraform.io/Cazoo-uk/bleeding-edge-aws", opts)
+		err := plugin.Debug(context.Background(), "registry.terraform.io/Cazoo-uk/terraform-aws-extras", opts)
 
 		if err != nil {
 			log.Fatal(err.Error())
